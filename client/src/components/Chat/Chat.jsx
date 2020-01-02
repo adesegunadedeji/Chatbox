@@ -3,7 +3,9 @@ import queryString from 'query-string';
 import InfoBar from '../InfoBar/InfoBar'
 import Input from '../Input/Input'
 import io from 'socket.io-client'
+import Messages from '../Messages/Messages'
 import './Chat.css'
+import TextBox from '../TextBox/TextBox'
 
 let socket;
 
@@ -12,9 +14,10 @@ const Chat =({location})=>{
     const [name, setName] = useState('');
 
     const [room, setRoom] = useState('');
+    const [users, setUsers] = useState('');
     const [message, setMessage] =useState('');
     const [messages, setMessages] = useState([]);
-    const ENDPOINT = 'localhost:5000'
+    const ENDPOINT = 'wss://chatbox-react.herokuapp.com/'
 
     useEffect(() => {
         const { name,room } = queryString.parse(location.search);
@@ -36,8 +39,21 @@ const Chat =({location})=>{
 
     useEffect(()=>{
       socket.on('message', (message) =>{
-        setMessages([...messages,message]); //Spread Operator adding Message to to Messages Array
+        setMessages([...messages, message]); //Spread Operator adding Message to to Messages Array
+      });
+
+
+      socket.on('roomData', ({ users }) => {
+        setUsers(users);
       })
+
+      
+    return () => {
+      socket.emit('disconnect');
+
+      socket.off();
+    }
+
     },[messages]);
 
 
@@ -55,9 +71,11 @@ const Chat =({location})=>{
         <div className="outerContainer">
           <div className="container">
             <InfoBar room = {room}/>
+            <Messages messages={messages} name={name}/>
             <Input message={message} setMessage={setMessage} sendMessage={sendMessage}/>
 {/* <input value={message} onChange={(event) => setMessages(event.target.value)} onKeyPress ={event => event.key === 'Enter' ? sendMessage(event) : null }/> */}
-          </div>
+       <TextBox users = {users}/>
+       </div>
         </div>
     )
   
